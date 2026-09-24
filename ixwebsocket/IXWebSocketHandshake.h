@@ -13,10 +13,12 @@
 #include "IXWebSocketInitResult.h"
 #include "IXWebSocketPerMessageDeflate.h"
 #include "IXWebSocketPerMessageDeflateOptions.h"
+#include "IXWebSocketSubProtocolSelector.h"
 #include <atomic>
 #include <chrono>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace ix
 {
@@ -37,9 +39,11 @@ namespace ix
                                             int port,
                                             int timeoutSecs);
 
-        WebSocketInitResult serverHandshake(int timeoutSecs,
-                                            bool enablePerMessageDeflate,
-                                            HttpRequestPtr request = nullptr);
+        WebSocketInitResult serverHandshake(
+            int timeoutSecs,
+            bool enablePerMessageDeflate,
+            HttpRequestPtr request = nullptr,
+            const SubProtocolSelector& subProtocolSelector = nullptr);
 
     private:
         std::string genRandomString(const int len);
@@ -48,6 +52,8 @@ namespace ix
         WebSocketInitResult sendErrorResponse(int code, const std::string& reason);
 
         bool insensitiveStringCompare(const std::string& a, const std::string& b);
+
+        static std::vector<std::string> parseSubProtocols(const std::string& header);
 
         std::atomic<bool>& _requestInitCancellation;
         std::unique_ptr<Socket>& _socket;

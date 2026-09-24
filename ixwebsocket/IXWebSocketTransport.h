@@ -89,7 +89,8 @@ namespace ix
                                             int timeoutSecs,
                                             bool enablePerMessageDeflate,
                                             HttpRequestPtr request = nullptr,
-                                            int sendTimeoutSecs = -1);
+                                            int sendTimeoutSecs = -1,
+                                            const SubProtocolSelector& subProtocolSelector = nullptr);
 
         PollResult poll();
         WebSocketSendInfo sendBinary(const IXWebSocketSendData& message,

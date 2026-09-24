@@ -257,7 +257,8 @@ namespace ix
                                                    int timeoutSecs,
                                                    bool enablePerMessageDeflate,
                                                    HttpRequestPtr request,
-                                                   int sendTimeoutSecs)
+                                                   int sendTimeoutSecs,
+                                                   const SubProtocolSelector& subProtocolSelector)
     {
         {
             std::lock_guard<std::mutex> lock(_configMutex);
@@ -265,8 +266,12 @@ namespace ix
                 _perMessageDeflateOptions, _socketTLSOptions, _enablePong, _pingIntervalSecs);
         }
 
-        WebSocketInitResult status = _ws.connectToSocket(
-            std::move(socket), timeoutSecs, enablePerMessageDeflate, request, sendTimeoutSecs);
+        WebSocketInitResult status = _ws.connectToSocket(std::move(socket),
+                                                         timeoutSecs,
+                                                         enablePerMessageDeflate,
+                                                         request,
+                                                         sendTimeoutSecs,
+                                                         subProtocolSelector);
         if (!status.success)
         {
             return status;
@@ -277,7 +282,7 @@ namespace ix
                                               emptyMsg,
                                               0,
                                               WebSocketErrorInfo(),
-                                              WebSocketOpenInfo(status.uri, status.headers),
+                                              WebSocketOpenInfo(status.uri, status.headers, status.protocol),
                                               WebSocketCloseInfo()));
 
         if (_pingIntervalSecs > 0)

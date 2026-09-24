@@ -107,3 +107,74 @@ TEST_CASE("subprotocol", "[websocket_subprotocol]")
         REQUIRE(subProtocols == "json,msgpack");
     }
 }
+
+TEST_CASE("subprotocol_selector", "[websocket_subprotocol]")
+{
+    auto negotiate = [](const std::string& selection,
+                        std::string& serverProtocol,
+                        std::string& clientProtocol) {
+        int port = getFreePort();
+        ix::WebSocketServer server(port);
+
+        std::vector<std::string> offered;
+        server.setSubProtocolSelector(
+            [&offered, selection](const std::vector<std::string>& subProtocols) {
+                offered = subProtocols;
+                return selection;
+            });
+        server.setOnClientMessageCallback(
+            [&serverProtocol](std::shared_ptr<ConnectionState>,
+                              WebSocket&,
+                              const ix::WebSocketMessagePtr& msg) {
+                if (msg->type == ix::WebSocketMessageType::Open)
+                {
+                    serverProtocol = msg->openInfo.protocol;
+                }
+            });
+        REQUIRE(server.listenAndStart());
+
+        std::atomic<bool> connected(false);
+        ix::WebSocket webSocket;
+        webSocket.setOnMessageCallback(
+            [&connected, &clientProtocol](const ix::WebSocketMessagePtr& msg) {
+                if (msg->type == ix::WebSocketMessageType::Open)
+                {
+                    clientProtocol = msg->openInfo.protocol;
+                    connected = true;
+                }
+            });
+        webSocket.addSubProtocol("ocpp2.0.1");
+        webSocket.addSubProtocol(" ocpp1.6");
+        webSocket.setUrl("ws://127.0.0.1:" + std::to_string(port));
+        webSocket.start();
+
+        int attempts = 0;
+        while (!connected)
+        {
+            REQUIRE(attempts++ < 300);
+            ix::msleep(10);
+        }
+
+        webSocket.stop();
+        server.stop();
+
+        std::vector<std::string> expected = {"ocpp2.0.1", "ocpp1.6"};
+        REQUIRE(offered == expected);
+    };
+
+    SECTION("Selected sub-protocol is echoed back")
+    {
+        std::string serverProtocol, clientProtocol;
+        negotiate("ocpp1.6", serverProtocol, clientProtocol);
+        REQUIRE(serverProtocol == "ocpp1.6");
+        REQUIRE(clientProtocol == "ocpp1.6");
+    }
+
+    SECTION("Sub-protocol not offered by the client is ignored")
+    {
+        std::string serverProtocol = "unset", clientProtocol = "unset";
+        negotiate("ocpp1.5", serverProtocol, clientProtocol);
+        REQUIRE(serverProtocol.empty());
+        REQUIRE(clientProtocol.empty());
+    }
+}

@@ -82,6 +82,11 @@ namespace ix
         _onClientMessageCallback = callback;
     }
 
+    void WebSocketServer::setSubProtocolSelector(const SubProtocolSelector& selector)
+    {
+        _subProtocolSelector = selector;
+    }
+
     void WebSocketServer::handleConnection(std::unique_ptr<Socket> socket,
                                            std::shared_ptr<ConnectionState> connectionState)
     {
@@ -151,7 +156,8 @@ namespace ix
                                                  _handshakeTimeoutSecs,
                                                  _enablePerMessageDeflate,
                                                  request,
-                                                 _sendTimeoutSeconds);
+                                                 _sendTimeoutSeconds,
+                                                 _subProtocolSelector);
         if (status.success)
         {
             // Process incoming messages and execute callbacks

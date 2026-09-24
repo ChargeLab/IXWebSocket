@@ -174,7 +174,8 @@ namespace ix
                                                             int timeoutSecs,
                                                             bool enablePerMessageDeflate,
                                                             HttpRequestPtr request,
-                                                            int sendTimeoutSecs)
+                                                            int sendTimeoutSecs,
+                                                            const SubProtocolSelector& subProtocolSelector)
     {
         std::lock_guard<std::mutex> lock(_socketMutex);
 
@@ -192,8 +193,8 @@ namespace ix
                                               _perMessageDeflateOptions,
                                               _enablePerMessageDeflate);
 
-        auto result =
-            webSocketHandshake.serverHandshake(timeoutSecs, enablePerMessageDeflate, request);
+        auto result = webSocketHandshake.serverHandshake(
+            timeoutSecs, enablePerMessageDeflate, request, subProtocolSelector);
         if (result.success)
         {
             setReadyState(ReadyState::OPEN);

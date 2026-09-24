@@ -45,6 +45,7 @@ namespace ix
 
         void setOnConnectionCallback(const OnConnectionCallback& callback);
         void setOnClientMessageCallback(const OnClientMessageCallback& callback);
+        void setSubProtocolSelector(const SubProtocolSelector& selector);
 
         // Get all the connected clients
         std::set<std::shared_ptr<WebSocket>> getClients();
@@ -68,6 +69,7 @@ namespace ix
 
         OnConnectionCallback _onConnectionCallback;
         OnClientMessageCallback _onClientMessageCallback;
+        SubProtocolSelector _subProtocolSelector;
 
         std::mutex _clientsMutex;
         std::set<std::shared_ptr<WebSocket>> _clients;

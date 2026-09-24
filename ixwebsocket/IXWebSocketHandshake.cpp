@@ -255,9 +255,29 @@ namespace ix
         return WebSocketInitResult(true, status, "", headers, path);
     }
 
-    WebSocketInitResult WebSocketHandshake::serverHandshake(int timeoutSecs,
-                                                            bool enablePerMessageDeflate,
-                                                            HttpRequestPtr request)
+    std::vector<std::string> WebSocketHandshake::parseSubProtocols(const std::string& header)
+    {
+        std::vector<std::string> subProtocols;
+        std::stringstream ss(header);
+        std::string token;
+        while (std::getline(ss, token, ','))
+        {
+            auto begin = token.find_first_not_of(" \t");
+            if (begin == std::string::npos)
+            {
+                continue;
+            }
+            auto end = token.find_last_not_of(" \t");
+            subProtocols.push_back(token.substr(begin, end - begin + 1));
+        }
+        return subProtocols;
+    }
+
+    WebSocketInitResult WebSocketHandshake::serverHandshake(
+        int timeoutSecs,
+        bool enablePerMessageDeflate,
+        HttpRequestPtr request,
+        const SubProtocolSelector& subProtocolSelector)
     {
         _requestInitCancellation = false;
 
@@ -371,6 +391,19 @@ namespace ix
         ss << "Connection: Upgrade\r\n";
         ss << "Server: " << userAgent() << "\r\n";
 
+        // Sub-protocol negotiation: echo back the one selected by the application
+        std::string selectedSubProtocol;
+        if (subProtocolSelector && headers.find("sec-websocket-protocol") != headers.end())
+        {
+            auto offered = parseSubProtocols(headers["sec-websocket-protocol"]);
+            auto selected = subProtocolSelector(offered);
+            if (std::find(offered.begin(), offered.end(), selected) != offered.end())
+            {
+                selectedSubProtocol = selected;
+                ss << "Sec-WebSocket-Protocol: " << selectedSubProtocol << "\r\n";
+            }
+        }
+
         // Parse the client headers. Does it support deflate ?
         std::string header = headers["sec-websocket-extensions"];
         WebSocketPerMessageDeflateOptions webSocketPerMessageDeflateOptions(header);
@@ -396,6 +429,8 @@ namespace ix
                 false, 0, std::string("Failed sending response to remote end"));
         }
 
-        return WebSocketInitResult(true, 200, "", headers, uri);
+        WebSocketInitResult result(true, 200, "", headers, uri);
+        result.protocol = selectedSubProtocol;
+        return result;
     }
 } // namespace ix
