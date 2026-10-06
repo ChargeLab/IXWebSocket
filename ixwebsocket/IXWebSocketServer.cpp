@@ -36,6 +36,7 @@ namespace ix
         , _enablePerMessageDeflate(true)
         , _pingIntervalSeconds(pingIntervalSeconds)
         , _sendTimeoutSeconds(sendTimeoutSeconds)
+        , _blockingSend(true)
     {
     }
 
@@ -70,6 +71,11 @@ namespace ix
     void WebSocketServer::disablePerMessageDeflate()
     {
         _enablePerMessageDeflate = false;
+    }
+
+    void WebSocketServer::disableBlockingSend()
+    {
+        _blockingSend = false;
     }
 
     void WebSocketServer::setOnConnectionCallback(const OnConnectionCallback& callback)
@@ -157,7 +163,8 @@ namespace ix
                                                  _enablePerMessageDeflate,
                                                  request,
                                                  _sendTimeoutSeconds,
-                                                 _subProtocolSelector);
+                                                 _subProtocolSelector,
+                                                 _blockingSend);
         if (status.success)
         {
             // Process incoming messages and execute callbacks

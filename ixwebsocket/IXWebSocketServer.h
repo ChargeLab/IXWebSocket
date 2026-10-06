@@ -42,6 +42,7 @@ namespace ix
         void enablePong();
         void disablePong();
         void disablePerMessageDeflate();
+        void disableBlockingSend();
 
         void setOnConnectionCallback(const OnConnectionCallback& callback);
         void setOnClientMessageCallback(const OnClientMessageCallback& callback);
@@ -66,6 +67,7 @@ namespace ix
         bool _enablePerMessageDeflate;
         int _pingIntervalSeconds;
         int _sendTimeoutSeconds;
+        bool _blockingSend;
 
         OnConnectionCallback _onConnectionCallback;
         OnClientMessageCallback _onClientMessageCallback;

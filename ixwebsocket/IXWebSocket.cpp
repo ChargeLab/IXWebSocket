@@ -258,7 +258,8 @@ namespace ix
                                                    bool enablePerMessageDeflate,
                                                    HttpRequestPtr request,
                                                    int sendTimeoutSecs,
-                                                   const SubProtocolSelector& subProtocolSelector)
+                                                   const SubProtocolSelector& subProtocolSelector,
+                                                   bool blockingSend)
     {
         {
             std::lock_guard<std::mutex> lock(_configMutex);
@@ -271,7 +272,8 @@ namespace ix
                                                          enablePerMessageDeflate,
                                                          request,
                                                          sendTimeoutSecs,
-                                                         subProtocolSelector);
+                                                         subProtocolSelector,
+                                                         blockingSend);
         if (!status.success)
         {
             return status;

@@ -175,13 +175,14 @@ namespace ix
                                                             bool enablePerMessageDeflate,
                                                             HttpRequestPtr request,
                                                             int sendTimeoutSecs,
-                                                            const SubProtocolSelector& subProtocolSelector)
+                                                            const SubProtocolSelector& subProtocolSelector,
+                                                            bool blockingSend)
     {
         std::lock_guard<std::mutex> lock(_socketMutex);
 
         // Server should not mask the data it sends to the client
         _useMask = false;
-        _blockingSend = true;
+        _blockingSend = blockingSend;
         _sendTimeoutSecs = sendTimeoutSecs;
 
         _socket = std::move(socket);
